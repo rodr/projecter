@@ -38,6 +38,7 @@ class Project(models.Model):
 
     class Meta:
         db_table = "project"
+        ordering = ["name"]
     
     def __unicode__(self):
         return u"%s" % self.name
@@ -115,6 +116,9 @@ class TaskChange(models.Model):
 
     class Meta:
         db_table = "task_change"
+
+    def __unicode__(self):
+        return u"%s" % self.comment
 
 #TODO models.signals.post_save.connect(new_task, sender=Task)
 #TODO models.signals.post_save.connect(user_nudge_task, sender=TaskNudge)

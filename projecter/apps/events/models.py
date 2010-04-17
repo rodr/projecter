@@ -20,17 +20,15 @@ from django.utils.translation import ugettext as _
 
 class EventType(models.Model):
     name = models.CharField(max_length=255)
-    template = models.TextField()
 
     class Meta:
         db_table = "event_type"
     
 class Event(models.Model):
-    type = models.ForeignKey(EventType)
     user = models.ForeignKey(User, related_name="event_actor")
     recipients = models.ManyToManyField(User, related_name="event_recipients", through='EventRecipient')
 
-    message = models.TextField()
+    target_status = model.PositiveIntegerField(choices=((1, "new"),(2, "update"),(3, ("delete"),), default=1)
 
     target_content_type = models.ForeignKey(ContentType, related_name="target", blank=True, null=True)
     target_object_id = models.PositiveIntegerField(blank=True, null=True)

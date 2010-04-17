@@ -1,0 +1,17 @@
+{% extends "templates/base.html" %}
+
+{% block "content" %}
+<h1>{{ task }} <small>re: <a href="/projects/{{ task.milestone.project.id }}/">{{ task.milestone.project }}</a></small></h1>
+<hr/>
+{{ task.description }}
+<hr/>
+<div>
+<p><b>Created on:</b> {{ task.created_at }}<br/>
+<b>Duration:</b> {{ task.duration }} horas<br/>
+<b>Assigned to:</b> {{ task.users.all|join:"," }}</p>
+</div>
+<p><strong>Changes:</strong></p>
+{% for change in changes %}
+<p>{{ change.user }}: {{ change }} {{ change.created_at }}</p>
+{% endfor %}
+{% endblock %}
