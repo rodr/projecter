@@ -32,6 +32,13 @@
                                 {% endfor %}
                                 </select>
                             </li>
+                            <li>
+                                By milestone: <select>
+                                {% for milestone in milestones %}
+                                    <option>{{ milestone }}</option>
+                                {% endfor %}
+                                </select>
+                            </li>
                         </ul>
                     </td>
                 </tr>
@@ -40,7 +47,7 @@
         <td width="200">
         Milestones:        
         {% for milestone in milestones %}
-            <p><a href="/milestones/{{ milestone.id }}">{{ milestone }}</a></p>
+            <p><a href="/milestones/{{ milestone.id }}/">{{ milestone }}</a></p>
         {% endfor %}
         </td>
     </tr>

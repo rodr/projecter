@@ -4,4 +4,5 @@ urlpatterns = patterns('projecter.apps.projects.views',
     (r'^projects/$', 'projects_index'),
     (r'^projects/(?P<project_id>\d+)/$', 'projects_project'),
     (r'^tasks/(?P<task_id>\d+)/$', 'projects_task'),
+    (r'^milestones/(?P<milestone_id>\d+)/$', 'projects_milestone'),
 )

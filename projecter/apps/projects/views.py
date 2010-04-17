@@ -48,3 +48,20 @@ def projects_task(request, task_id, template="templates/projects/task.html"):
         "task": task,
         "changes": changes
     }))
+
+def projects_milestone(request, milestone_id, template="templates/projects/milestone.html"):
+    milestone = get_object_or_404(Milestone, id=milestone_id)
+    tasks_total = Task.objects.filter(milestone=milestone).count() #TODO: use char for this
+    tasks_completed = Task.objects.filter(milestone=milestone, status=7).count()
+
+    graph_size = (tasks_completed/tasks_total)*98
+
+    tasks = Task.objects.by_changes()
+
+    return render_to_response(template, RequestContext(request, {
+        "milestone": milestone,
+        "tasks_total": tasks_total,
+        "tasks_completed": tasks_completed,
+        "graph_size": graph_size+2,
+        "tasks": tasks
+    }))

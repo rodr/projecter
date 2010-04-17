@@ -20,7 +20,22 @@ from projecter.apps.accounts.models import Company
 from projecter.apps.projects import workflow
 
 class TaskManager(models.Manager):
-    pass
+    def by_changes(self, milestone=None): #TODO: filter by milestone
+        query = """
+            SELECT `task`.`id`, `task`.`name`, `task`.`priority`, `task`.`status`, `task`.`duration`, COUNT(`task_change`.`id`) AS `changes`
+            FROM `task`
+            INNER JOIN (task_change) ON task.id = task_change.task_id
+            ORDER BY 3, 6, 4
+        """
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute(query)
+        result_list = []
+        for row in cursor.fetchall():
+            change = self.model(id=row[0], name=row[1], priority=row[2], status=row[3], duration=row[4])
+            change.total_changes = row[5]
+            result_list.append(change)
+        return result_list
 
 class TaskChangeManager(models.Manager):
     def for_task(self, task):
