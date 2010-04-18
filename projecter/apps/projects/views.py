@@ -140,10 +140,10 @@ def projects_milestone(request, milestone_id, template="templates/projects/miles
     """An overview of a milestone given its id."""
 
     milestone = get_object_or_404(Milestone, id=milestone_id)
-    tasks_total = Task.objects.filter(milestone=milestone).count()
-    tasks_completed = Task.objects.filter(milestone=milestone, status=7).count() #TODO: use TaskStatus
-    try:
-        graph_size = (tasks_completed/tasks_total)*98
+    tasks_total = float(Task.objects.filter(milestone=milestone).count()) #TODO: fix numeration!
+    tasks_completed = float(Task.objects.filter(milestone=milestone, status=7).count()) #TODO: use TaskStatus
+    try: 
+        graph_size = (tasks_completed/tasks_total)*98.0
     except ZeroDivisionError, err:
         graph_size = -2
 
@@ -151,8 +151,8 @@ def projects_milestone(request, milestone_id, template="templates/projects/miles
 
     return render_to_response(template, RequestContext(request, {
         "milestone": milestone,
-        "tasks_total": tasks_total,
-        "tasks_completed": tasks_completed,
+        "tasks_total": int(tasks_total),
+        "tasks_completed": int(tasks_completed),
         "graph_size": graph_size+2,
         "tasks": tasks
     }))
