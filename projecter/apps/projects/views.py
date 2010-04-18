@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
 from django import http
 from django.conf import settings
 from django.template import RequestContext
@@ -24,7 +26,15 @@ from projecter.apps.projects.models import Project, Milestone, Task, TaskChange
 
 @cache_page(60*60)
 def projects_index(request, template="templates/projects/index.html"):
-    projects = Project.objects.all()
+    order_map = {
+        "name": "name",
+        "company": "company"
+    }
+    request_order = request.GET.get("order", "name")    
+    if request_order in order_map:
+        projects = Project.objects.order_by(order_map[request_order])
+    else:
+        projects = Project.objects.all()
 
     return render_to_response(template, RequestContext(request, {
         "projects": projects
@@ -33,7 +43,25 @@ def projects_index(request, template="templates/projects/index.html"):
 def projects_project(request, project_id, template="templates/projects/project.html"):
     project = get_object_or_404(Project, id=project_id)
     milestones = Milestone.objects.filter(project=project)
-    tasks = Task.objects.filter(milestone__project=project)
+
+    request_filter = request.GET.get("filter") 
+    try:    
+        request_target = int(request.GET.get("target"))
+    except (TypeError, ValueError):
+        request_target = 0
+   
+    filter_map = {
+        "upcoming": Task.objects.filter(milestone__project=project).exclude(status=7),
+        "closed": Task.objects.filter(milestone__project=project, status=7),
+        #"assigned_to_me": Task.objects.filter(milestone__project=project, users=request.user),
+        "assigned_to": Task.objects.filter(milestone__project=project, users__id=request_target),
+        "by_milestone": Task.objects.filter(milestone__project=project, milestone__id=request_target)
+    }
+
+    if request_filter in filter_map:
+        tasks = filter_map[request_filter]
+    else:
+        tasks = Task.objects.filter(milestone__project=project)
 
     return render_to_response(template, RequestContext(request, {
         "project": project,
