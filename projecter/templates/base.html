@@ -2,13 +2,35 @@
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <title>Projecter</title>
+    <title>{% block "title" %}{% endblock %}Projecter</title>
+
+<style type="text/css" media="screen">
+/* <![CDATA[ */
+body {
+    font-family:Arial, sans-serif;
+    font-size:13px;
+}
+
+small {
+    font-size:11px;
+}
+/* ]]> */
+</style>
+
     {% block "header" %}{% endblock %}
 </head>
 <body>
 <div style="background-color:#CCC;">
 <a href="/projects/">Projects</a>
+Bienvenido {{ user }}
 </div>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 {% block "content" %}{% endblock %}
 </body>
 </html>

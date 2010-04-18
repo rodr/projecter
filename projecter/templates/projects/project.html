@@ -6,15 +6,20 @@
         <td rowspan="2" valign="top">
             <h2>{{ project }}</h2>
             <p>{{ project.description }}</p>
-            <p>Tasks</p>
+            {% if perms.project.can_edit %}<p><a href="/projects/{{ project.id }}/edit/">Editar</a>{% endif %}</p>
+            <p>
+                <button onclick="location='/projects/{{ project.id }}/add_milestone/'">Add milestone to this project</button>
+                <button onclick="location='/projects/{{ project.id }}/add_task/'">Add task to this project</button>
+            </p>
             <hr/>
-            <table border="1" width="100%">
+            <p>Tasks</p>
+            <table border="1" width="100%" valign="top">
                 <tr>
                     <td>
                     {% if tasks %}
                     {% for task in tasks %}
                         <p>
-                            <a href="/tasks/{{ task.id }}/">{{ task }}</a><br/><small>{{ task.created_at }} (duración: {{ task.duration }} horas)</small>
+                            <a href="/tasks/{{ task.id }}/">{{ task }}</a><br/><small>{{ task.created_at }} (Duration: {{ task.duration }} hours)</small>
                             
                         </p>
                     {% endfor %}
@@ -23,6 +28,8 @@
                     {% endif %}
                     </td>
                     <td width="200">
+
+                        <br/>
                         Filter by:
                         <ul>
                             <li><a href="?filter=">All</a></li>
@@ -31,14 +38,15 @@
                             <li><a href="?filter=assigned_to_me">Assigned to me</a></li>
                             <li>
                                 Assigned to: <select onchange="location='?filter=assigned_to&target='+this[this.selectedIndex].value">
+                                    <option value="">-------</option>
                                 {% for person in project.people.all %}
-                                    <option>{{ person }}</option>
+                                    <option value="{{ person.id }}">{{ person }}</option>
                                 {% endfor %}
                                 </select>
                             </li>
                             <li>
                                 By milestone: <select onchange="location='?filter=by_milestone&target='+this[this.selectedIndex].value">
-                                    <option value="">Select</option>
+                                    <option value="">-------</option>
                                 {% for milestone in milestones %}
                                     <option value="{{ milestone.id }}">{{ milestone }}</option>
                                 {% endfor %}

@@ -20,13 +20,14 @@ from projecter.apps.accounts.models import Company
 from projecter.apps.projects import workflow
 
 class TaskManager(models.Manager):
-    def by_changes(self, milestone=None): #TODO: filter by milestone
+    def by_changes(self, milestone=None, changes=1): #TODO: ultra refactor
         query = """
             SELECT `task`.`id`, `task`.`name`, `task`.`priority`, `task`.`status`, `task`.`duration`, COUNT(`task_change`.`id`) AS `changes`
             FROM `task`
-            INNER JOIN (task_change) ON task.id = task_change.task_id
+            LEFT JOIN (task_change) ON task.id = task_change.task_id
+            WHERE `task`.`milestone_id` = %d HAVING `changes` > %d
             ORDER BY 3, 6, 4
-        """
+        """ % (milestone.id, changes)
         from django.db import connection
         cursor = connection.cursor()
         cursor.execute(query)
@@ -44,7 +45,7 @@ class TaskChangeManager(models.Manager):
         return changes
 
 class Project(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     company = models.ForeignKey(Company)
 
@@ -106,22 +107,19 @@ class TaskNudge(models.Model):
         db_table = "task_nudge"
 
 class TaskChange(models.Model):
-    TASK_FIELDS = ( #TODO: workaround this kind of events
-        (1, "name"),
-        (2, "description"),
-        (3, "users"),
-        (4, "type"),
-        (5, "priority"),
-        (6, "status"),
-        (7, "milestone"),
-        (8, "duration"),
+    TASK_FIELDS = (
+        ("status", _("Status")),
+        ("description", _("Description")),
+        ("priority", _("Priority")),
+        ("duration", _("Duration")),
+        ("type", _("Type")),
+        ("name", _("Name")),
     )
 
     user = models.ForeignKey(User)
     task = models.ForeignKey(Task)
-    comment = models.TextField(blank=True)
 
-    field = models.PositiveIntegerField(choices=TASK_FIELDS, default=1)
+    field = models.CharField(max_length=100, choices=TASK_FIELDS)
     old_value = models.TextField()
     new_value = models.TextField()
 
@@ -133,7 +131,7 @@ class TaskChange(models.Model):
         db_table = "task_change"
 
     def __unicode__(self):
-        return u"%s" % self.comment
+        return u"%s from \"%s\" to \"%s\"" % (self.field, self.old_value, self.new_value)
 
 #TODO models.signals.post_save.connect(new_task, sender=Task)
 #TODO models.signals.post_save.connect(user_nudge_task, sender=TaskNudge)

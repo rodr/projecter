@@ -21,11 +21,12 @@ from django.contrib import messages
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth.forms import AuthenticationForm
 
-from projecter.apps.accounts import forms
+from projecter.apps.accounts.forms import UserLogin
 
-def common_login(request, template="accounts/login.html"):
+def accounts_login(request, template="templates/accounts/login.html"):
     if request.user.is_authenticated():
         raise http.Http404()
 
@@ -40,7 +41,7 @@ def common_login(request, template="accounts/login.html"):
 
             return http.HttpResponseRedirect(redirect_to)
     else:
-       form = forms.UserLogin(request)
+       form = UserLogin(request)
 
     request.session.set_test_cookie()
 
@@ -49,12 +50,15 @@ def common_login(request, template="accounts/login.html"):
     }))
     
 @login_required
-def common_logout(request):
+def accounts_logout(request):
     logout(request)
 
     messages.info(request, "Haz salido satisfactoriamente de la aplicacion.")
 
     return http.HttpResponseRedirect("/login/")
+
+def accounts_permission_required(request, template="templates/accounts/permission_required.html"):
+    return render_to_response(template, RequestContext(request))
   
 def common_404(request):
-    return render_to_response('common/templates/404.html')
+    return render_to_response('templates/404.html')

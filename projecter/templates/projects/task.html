@@ -5,13 +5,21 @@
 <hr/>
 {{ task.description }}
 <hr/>
-<div>
-<p><b>Created on:</b> {{ task.created_at }}<br/>
-<b>Duration:</b> {{ task.duration }} horas<br/>
-<b>Assigned to:</b> {{ task.users.all|join:"," }}</p>
+<div class="meta">
+    <p><b>Created on:</b> {{ task.created_at }}<br/>
+    <b>Duration:</b> {{ task.duration }} horas<br/>
+    <b>Assigned to:</b> {{ task.users.all|join:"," }}</p>
 </div>
+
 <p><strong>Changes:</strong></p>
 {% for change in changes %}
-<p>{{ change.user }}: {{ change }} {{ change.created_at }}</p>
+    <p>{{ change.user }}: {{ change }} {{ change.created_at }}</p>
 {% endfor %}
+<form method="post" action="" style="background-color:#CCC;">
+{{ form.as_p }}
+{% csrf_token %}
+<input type="submit" />
+</form>
+
+
 {% endblock %}
