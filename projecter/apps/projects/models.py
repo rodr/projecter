@@ -26,24 +26,7 @@ from projecter.apps.projects import workflow
 ##### Managers
 
 class TaskManager(models.Manager):
-    def by_changes(self, milestone=None, changes=1): #TODO: ultra refactor
-        query = """
-            SELECT `task`.`id`, `task`.`name`, `task`.`priority`, `task`.`status`, `task`.`duration`, COUNT(`task_change`.`id`) AS `changes`
-            FROM `task`
-            LEFT JOIN (task_change) ON task.id = task_change.task_id
-            WHERE `task`.`milestone_id` = %d HAVING `changes` > %d
-            ORDER BY 3, 6, 4
-        """
-
-        from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute(query % (milestone.id, changes))
-        result_list = []
-        for row in cursor.fetchall():
-            change = self.model(id=row[0], name=row[1], priority=row[2], status=row[3], duration=row[4])
-            change.total_changes = row[5]
-            result_list.append(change)
-        return result_list
+    pass
 
 class TaskChangeManager(models.Manager):
     def for_task(self, task):
@@ -53,7 +36,7 @@ class TaskChangeManager(models.Manager):
 
     def grouped(self, task):
         changes = self.for_task(task)
-
+        num = 0
         last_uid = None
         for change in changes:
             uid = (change.created_at, change.user)
@@ -61,12 +44,13 @@ class TaskChangeManager(models.Manager):
                 current = {
                     "user": change.user,
                     "created_at": change.created_at,
-                    "fields":[]
+                    "fields":[],
+                    "num": num
                 }
+                num += 1
+                last_uid = uid
 
                 yield current
-
-                last_uid = uid
 
             if change.field == "comment":
                 current["comment"] = change.new_value
@@ -76,7 +60,6 @@ class TaskChangeManager(models.Manager):
                     "old": change.old_value,
                     "new": change.new_value
                 })
-
 
 ##### Models
 

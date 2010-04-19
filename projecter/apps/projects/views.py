@@ -50,13 +50,11 @@ class TaskForm(BaseTaskForm):
         exclude = ("changed_at",)
 
 class TaskChangeForm(BaseTaskForm):
-    comment = forms.CharField(required=False, widget=forms.Textarea())
+    comment = forms.CharField(required=True, widget=forms.Textarea())
 
     class Meta:
         model = Task
         exclude = ("description", "changed_at",)
-
-
 
 ##### Views
 
@@ -83,7 +81,7 @@ def projects_add(request, template="templates/projects/add.html"):
         if form.is_valid():
             form.save()
 
-            messages.success(request, _("The project has been created."))
+            messages.success(request, _("Project has been created."))
 
             return http.HttpResponseRedirect("/projects/")
     else:
@@ -100,7 +98,7 @@ def projects_edit(request, project_id, template="templates/projects/add.html"):
         if form.is_valid():
             form.save()
 
-            messages.success(request, _("The project has been succesfully edited."))
+            messages.success(request, _("Project has been succesfully edited."))
 
             return http.HttpResponseRedirect("/projects/%d/" % project.id)
     else:
@@ -141,19 +139,16 @@ def projects_project(request, project_id, template="templates/projects/project.h
 @login_required
 def projects_milestone(request, milestone_id, template="templates/projects/milestone.html"):
     milestone = get_object_or_404(Milestone, id=milestone_id)
-    tasks_total = Task.objects.filter(milestone=milestone).count() #TODO: fix numeration!
-    tasks_completed = Task.objects.filter(milestone=milestone, status=7).count() #TODO: use TaskStatus
+    tasks_total = Task.objects.filter(milestone=milestone).count()
+    tasks_completed = Task.objects.filter(milestone=milestone, status="closed").count()
 
     try: 
         graph_size = (float(tasks_completed)/float(tasks_total))*98
     except ZeroDivisionError, err:
         graph_size = -2
 
-    tasks = Task.objects.by_changes(milestone)
-
     return render_to_response(template, RequestContext(request, {
         "milestone": milestone,
-        "tasks": tasks,
         "tasks_total": int(tasks_total),
         "tasks_completed": int(tasks_completed),
         "graph_size": graph_size+2,

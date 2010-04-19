@@ -57,6 +57,12 @@ def accounts_logout(request):
 
     return http.HttpResponseRedirect("/login/")
 
+@login_required
+def accounts_profile(request, username, template="templates/accounts/profile.html"):
+    return render_to_response(template, RequestContext(request, {
+
+    }))
+
 def accounts_permission_required(request, template="templates/accounts/permission_required.html"):
     return render_to_response(template, RequestContext(request))
   

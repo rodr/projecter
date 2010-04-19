@@ -12,18 +12,20 @@
 </div>
 
 <p><strong>Changes:</strong></p>
+<div style="border:solid 1px #CCC; padding:10px; width:572px;border:solid 1px #CCC; margin-bottom:10px; width:550px; border-right:solid 1px #999; border-bottom:solid 1px #999;">
 {% for change in changes %}
-<div style="border:solid 1px #CCC; margin-bottom:10px;">
+<div style="padding:0 10px;border-bottom:solid 1px #CCC;" id="cnum-{{ change.num }}">
 <p>{{ change.user }} el {{ change.created_at|date:"j F Y H:i" }}:</p>
 <ul>
     {% for field in change.fields %}
         <li><b>{{ field.label }}</b> <em>{{ field.old }}</em> to <em>{{ field.new }}</em></li>
     {% endfor %}
 </ul>
-<pre>{{ change.comment }}</pre>
+<div style="font-family:monospace; font-size:12px; margin:5px 0;">{{ change.comment }}</div>
 </div>
 {% endfor %}
-<form method="post" action="" style="background-color:#CCC;">
+</div>
+<form method="post" action="" style="border:solid 1px #CCC; background-color:#FDFDFD; width:500px; padding:10px;">
 {{ form.as_p }}
 {% csrf_token %}
 <input type="submit" />
