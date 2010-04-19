@@ -68,11 +68,11 @@
         <td>
             <h4>Managers</h4>
             {% for person in project.managers.all %}
-            {{ person }}
+            <a href="/user/{{ person }}/">{{ person }}</a>
             {% endfor %}
             <h4>Team</h4>
             {% for person in project.people.all %}
-            {{ person }}
+            <a href="/user/{{ person }}/">{{ person }}</a>
             {% endfor %}
         </td>
     </tr>

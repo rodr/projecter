@@ -38,21 +38,30 @@ class MilestoneForm(forms.ModelForm):
         model = Milestone
         exclude = ("project",)
 
-class TaskForm(forms.ModelForm):
+class BaseTaskForm(forms.ModelForm):
     milestone = forms.ModelChoiceField(queryset=None, widget=forms.Select())
-
-    class Meta:
-        model = Task
 
     def set_milestones(self, milestones):
         self.fields["milestone"].queryset = milestones
+
+class TaskForm(BaseTaskForm):
+    class Meta:
+        model = Task
+        exclude = ("changed_at",)
+
+class TaskChangeForm(BaseTaskForm):
+    comment = forms.CharField(required=False, widget=forms.Textarea())
+
+    class Meta:
+        model = Task
+        exclude = ("description", "changed_at",)
+
+
 
 ##### Views
 
 @login_required
 def projects_index(request, template="templates/projects/index.html"):
-    """Shows all projects in a list, is orderable by name and company."""
-
     order_map = {
         "name": "name",
         "company": "company"
@@ -69,8 +78,6 @@ def projects_index(request, template="templates/projects/index.html"):
 
 @permission_required("project.add_project", login_url="/permission_required/")
 def projects_add(request, template="templates/projects/add.html"):
-    """The form for adding a project."""
-
     if request.method == "POST":
         form = ProjectForm(request.POST)
         if form.is_valid():
@@ -86,8 +93,6 @@ def projects_add(request, template="templates/projects/add.html"):
 
 @permission_required("project.change_project", login_url="/permission_required/")
 def projects_edit(request, project_id, template="templates/projects/add.html"):
-    """Edit a project given a valid project_id."""
-
     project = get_object_or_404(Project, id=project_id)
 
     if request.method == "POST":
@@ -105,8 +110,6 @@ def projects_edit(request, project_id, template="templates/projects/add.html"):
 
 @login_required
 def projects_project(request, project_id, template="templates/projects/project.html"):
-    """The project dashboard. Shows all its tasks and milestones."""
-
     project = get_object_or_404(Project, id=project_id)
     milestones = Milestone.objects.filter(project=project)
 
@@ -117,8 +120,8 @@ def projects_project(request, project_id, template="templates/projects/project.h
         request_target = 0
    
     filter_map = {
-        "upcoming": Task.objects.filter(milestone__project=project).exclude(status=7),
-        "closed": Task.objects.filter(milestone__project=project, status=7),
+        "upcoming": Task.objects.filter(milestone__project=project).exclude(status="closed"),
+        "closed": Task.objects.filter(milestone__project=project, status="closed"),
         "assigned_to_me": Task.objects.filter(milestone__project=project, users=request.user),
         "assigned_to": Task.objects.filter(milestone__project=project, users__id=request_target),
         "by_milestone": Task.objects.filter(milestone__project=project, milestone__id=request_target)
@@ -137,13 +140,12 @@ def projects_project(request, project_id, template="templates/projects/project.h
 
 @login_required
 def projects_milestone(request, milestone_id, template="templates/projects/milestone.html"):
-    """An overview of a milestone given its id."""
-
     milestone = get_object_or_404(Milestone, id=milestone_id)
-    tasks_total = float(Task.objects.filter(milestone=milestone).count()) #TODO: fix numeration!
-    tasks_completed = float(Task.objects.filter(milestone=milestone, status=7).count()) #TODO: use TaskStatus
+    tasks_total = Task.objects.filter(milestone=milestone).count() #TODO: fix numeration!
+    tasks_completed = Task.objects.filter(milestone=milestone, status=7).count() #TODO: use TaskStatus
+
     try: 
-        graph_size = (tasks_completed/tasks_total)*98.0
+        graph_size = (float(tasks_completed)/float(tasks_total))*98
     except ZeroDivisionError, err:
         graph_size = -2
 
@@ -151,14 +153,14 @@ def projects_milestone(request, milestone_id, template="templates/projects/miles
 
     return render_to_response(template, RequestContext(request, {
         "milestone": milestone,
+        "tasks": tasks,
         "tasks_total": int(tasks_total),
         "tasks_completed": int(tasks_completed),
         "graph_size": graph_size+2,
-        "tasks": tasks
     }))
 
+@permission_required("milestone.add_milestone", login_url="/permission_required/")
 def projects_milestone_add(request, project_id, template="templates/projects/milestone_add.html"):
-    """Form for adding a milestone to a project given its id."""
     project = get_object_or_404(Project, id=project_id)
     
     if request.method == "POST":
@@ -180,45 +182,26 @@ def projects_milestone_add(request, project_id, template="templates/projects/mil
 
 @login_required
 def projects_task(request, task_id, template="templates/projects/task.html"):
-    """Detail of a task including its changes."""
     task = get_object_or_404(Task, id=task_id)
 
-    changes = TaskChange.objects.for_task(task)
+    changes = TaskChange.objects.grouped(task)
     milestones = Milestone.objects.filter(project=task.milestone.project)
 
-    from django.forms.models import model_to_dict
-    _task = model_to_dict(task, fields=["status", "description", "priority", "duration", "type", "name"])
-    
     if request.method == "POST":
-        form = TaskForm(request.POST, instance=task)
+        form = TaskChangeForm(request.POST, instance=task)
         form.set_milestones(milestones)
 
         if form.is_valid():
-            import time
-            version_time = time.time()
-            logging.debug("Saving change of task at <%d>" % version_time)
+            _task = form.save(commit=False)
+            _task.save(request, form.cleaned_data["comment"])
 
-            for _key in _task.keys():
-                logging.debug("%s: from \"%s\" to \"%s\"" % (_key, _task[_key], form.cleaned_data[_key]))
-                if _task[_key] != form.cleaned_data[_key]:
-                    field_revision = TaskChange()
-                    field_revision.user = request.user
-                    field_revision.task = task
-
-                    field_revision.field = _key
-                    field_revision.old_value = _task[_key]
-                    field_revision.new_value = form.cleaned_data[_key]
-
-                    field_revision.created_at = version_time
-                    field_revision.save()
-
-            form.save()
-            messages.success(request, "Task modified.")
+            messages.success(request, _("Task modified."))
 
             return http.HttpResponseRedirect("/tasks/%d/" % task.id)
     else:
-        form = TaskForm(instance=task)
+        form = TaskChangeForm(instance=task)
         form.set_milestones(milestones)
+
     return render_to_response(template, RequestContext(request, {
         "task": task,
         "changes": changes,
@@ -227,8 +210,6 @@ def projects_task(request, task_id, template="templates/projects/task.html"):
 
 @login_required
 def projects_task_add(request, project_id, template="templates/projects/task_add.html"):
-    """Form for adding a task to a project given its id."""
-
     project = get_object_or_404(Project, id=project_id)
     milestones = Milestone.objects.filter(project=project)
 
@@ -244,7 +225,7 @@ def projects_task_add(request, project_id, template="templates/projects/task_add
             return http.HttpResponseRedirect("/projects/%d/" % project.id)
     else:
         form = TaskForm()
-        form.set_milestones(milestones)    
+        form.set_milestones(milestones)  
 
     return render_to_response(template, RequestContext(request, {
         "form": form

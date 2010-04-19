@@ -16,23 +16,23 @@ from django.utils.translation import ugettext as _
 
 
 TASK_TYPE = (
-    (1, _("request")),
-    (2, _("bug")),
+    ("request", _("Request")),
+    ("bug", _("Bug")),
 )
 
 TASK_PRIORITY = (
-    (1, _("urgent")),
-    (2, _("high")),
-    (3, _("normal")),
-    (4, _("low")),
+    ("urgent", _("Urgent")),
+    ("high", _("High")),
+    ("normal", _("Normal")),
+    ("low", _("Low")),
 )
 
 TASK_STATUS = (
-    (1, _("new")),
-    (2, _("research")),
-    (3, _("process")),
-    (4, _("review")),
-    (5, _("accepted")),
-    (6, _("resolved")),
-    (7, _("closed")),
+    ("new", _("New")),
+    ("research", _("Research")),
+    ("process", _("Process")),
+    ("review", _("Review")),
+    ("accepted", _("Accepted")),
+    ("resolved", _("Resolved")),
+    ("closed", _("Closed")),
 )

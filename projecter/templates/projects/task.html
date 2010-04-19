@@ -13,7 +13,15 @@
 
 <p><strong>Changes:</strong></p>
 {% for change in changes %}
-    <p>{{ change.user }}: {{ change }} {{ change.created_at }}</p>
+<div style="border:solid 1px #CCC; margin-bottom:10px;">
+<p>{{ change.user }} el {{ change.created_at|date:"j F Y H:i" }}:</p>
+<ul>
+    {% for field in change.fields %}
+        <li><b>{{ field.label }}</b> <em>{{ field.old }}</em> to <em>{{ field.new }}</em></li>
+    {% endfor %}
+</ul>
+<pre>{{ change.comment }}</pre>
+</div>
 {% endfor %}
 <form method="post" action="" style="background-color:#CCC;">
 {{ form.as_p }}
